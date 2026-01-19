@@ -18,6 +18,6 @@ Finally, I generated heatmaps of the top upregulated and downregulated genes to 
 
 Gene Ontology (left) and KEGG pathway (right) enrichment analyses reveal distinct biological programs that are activated or suppressed following EWS–FLI knockdown. Activated terms are enriched for extracellular matrix organization, collagen binding, focal adhesion, and ECM–receptor interactions, suggesting restoration of cell–matrix interactions and differentiation-associated programs. In contrast, suppressed terms are dominated by ribosomal function, RNA splicing, DNA replication, and cell-cycle–related pathways, indicating downregulation of proliferative and biosynthetic processes. Together, these results support a model in which EWS–FLI maintains oncogenic programs by promoting proliferation and transcriptional machinery while repressing extracellular matrix–related and differentiation pathways in Ewing sarcoma.
 
-![GO](gse_GO.png)
+![GO](gseGO.png)
 
 ![KEGG](gseKEGG.png)
