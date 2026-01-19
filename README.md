@@ -20,4 +20,4 @@ Gene Ontology (left) and KEGG pathway (right) enrichment analyses reveal distinc
 
 ![GO](gse_GO.png)
 
-![KEGG](heatmap.png)
+![KEGG](gseKEGG.png)
