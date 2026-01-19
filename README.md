@@ -7,3 +7,17 @@ In this project, I analyzed publicly available RNA-sequencing data from the NCBI
 Principal component analysis (PCA) reveals a clear separation between control (shCTR) and EWS–FLI knockdown (shEF1) samples, with PC1 explaining 98% of the total variance. This indicates that EWS–FLI knockdown is the primary driver of transcriptional variation in this dataset. In addition, biological replicates cluster tightly within each condition, suggesting high data quality and minimal batch effects.
 
 ![PCA Plot](PCA_plot.png) 
+
+Next, I used a volcano plot to visualize differentially expressed genes following EWS–FLI knockdown. In total, 3,086 genes were upregulated and 1,455 genes were downregulated. Genes located farther from the origin and higher along the y-axis represent strong candidates for biological relevance. Notably, highly upregulated genes include MGP, GPX3, and IGFBP3, while prominent downregulated genes include MMRN1, GABRA4, and SYNPR.
+
+![Volcano Plot](volcano_plot.png)
+
+Finally, I generated heatmaps of the top upregulated and downregulated genes to further illustrate expression patterns and sample clustering across conditions.
+
+![heatmap](heatmap.png)
+
+Gene Ontology (left) and KEGG pathway (right) enrichment analyses reveal distinct biological programs that are activated or suppressed following EWS–FLI knockdown. Activated terms are enriched for extracellular matrix organization, collagen binding, focal adhesion, and ECM–receptor interactions, suggesting restoration of cell–matrix interactions and differentiation-associated programs. In contrast, suppressed terms are dominated by ribosomal function, RNA splicing, DNA replication, and cell-cycle–related pathways, indicating downregulation of proliferative and biosynthetic processes. Together, these results support a model in which EWS–FLI maintains oncogenic programs by promoting proliferation and transcriptional machinery while repressing extracellular matrix–related and differentiation pathways in Ewing sarcoma.
+
+![GO](gse_GO.png)
+
+![KEGG](heatmap.png)
