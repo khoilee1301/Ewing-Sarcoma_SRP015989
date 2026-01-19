@@ -18,7 +18,7 @@ When you click the **Knit** button a document will be generated that includes bo
 rm(list = ls())
 ```
 
-```{r warning = FALSE}
+```{r warning = FALSE, message = FALSE}
 # Load libraries
 library(pheatmap)
 library(recount)
@@ -86,7 +86,8 @@ logdata <- as.data.frame(assay(logdds))
 PCA_data <- plotPCA(logdds, intgroup = "condition", returnData = TRUE)
 percentVar <- round(100 * attr(PCA_data, "percentVar"))
 ggplot(PCA_data, aes(x = PC1, y = PC2, color = condition)) + geom_point() + theme_bw() + 
-  xlab(paste0("PC1:",percentVar[1], "% variance")) + ylab(paste0("PC2:",percentVar[2], "% variance")) +
+  xlab(paste0("PC1:",percentVar[1], "% variance")) + 
+  ylab(paste0("PC2:",percentVar[2], "% variance")) +
   scale_color_manual(name = "Treatment", values = c("red4","blue3"))
 ```
 
@@ -119,7 +120,8 @@ resdf <- as.data.frame(resNorm) %>%
 
 ```{r}
 #extract gene lists based on ENSEMBL
-genelist <- AnnotationDbi::select(org.Hs.eg.db, keys = rownames(resNorm), keytype = "ENSEMBL", columns = c("ENTREZID", "SYMBOL", "GENETYPE","GENENAME"))
+genelist <- AnnotationDbi::select(org.Hs.eg.db, keys = rownames(resNorm), keytype = "ENSEMBL", 
+                                  columns = c("ENTREZID", "SYMBOL", "GENETYPE","GENENAME"))
 
 #filter genes with no padj, no symbol, or duplicated symbol
 resdf <- resdf %>%
@@ -132,7 +134,8 @@ resdf <- resdf %>%
 
 ```{r}
 #filter out significant genes
-sig_gene_resdata <- resdf[resdf$baseMean >= 20 & abs(resdf$log2FoldChange) >=1 & resdf$padj <= 0.05, ]
+sig_gene_resdata <- resdf[resdf$baseMean >= 20 & abs(resdf$log2FoldChange) >=1 & 
+                            resdf$padj <= 0.05, ]
 sig_gene <- sig_gene_resdata$ENSEMBL
 ```
 
@@ -144,7 +147,9 @@ sig_gene_logdata <- logdata[sig_gene,]
 heatmap_anno <- as.data.frame(colData(dds)) %>%
   dplyr::select(condition)
 
-pheatmap(sig_gene_logdata, scale = "row", clustering_distance_rows = "correlation", annotation_col = heatmap_anno, title = "Differenly expressed gene", show_rownames = FALSE, fontsize_col = 8)
+pheatmap(sig_gene_logdata, scale = "row", clustering_distance_rows = "correlation", 
+         annotation_col = heatmap_anno, title = "Differenly expressed gene", 
+         show_rownames = FALSE, fontsize_col = 8)
 ```
 
 ```{r}
@@ -187,15 +192,19 @@ rownames(downregulated_heatdata) <- down10_geneid
 
 #Heatmap of the top and down regulated genes
 mergeheatdata <- rbind(downregulated_heatdata, upregulated_heatdata)
-pheatmap(mergeheatdata, scale = "row", clustering_distance_rows = "correlation", annotation_col = heatmap_anno, 
-         title = "heatmap of top 10 up-regulated and down-regulated genes", fontsize_row = 8)
+pheatmap(mergeheatdata, scale = "row", clustering_distance_rows = "correlation", 
+         annotation_col = heatmap_anno, fontsize_row = 8)
 ```
 
 
 
 ```{r}
 # Volcano plot
-EnhancedVolcano(resdf, x = "log2FoldChange", y = "padj", lab = resdf$SYMBOL, FCcutoff = 1, pCutoff = 0.05, pointSize = 1, labSize = 3, title =  "Volcano plot", titleLabSize = 20, legendPosition = "right", legendIconSize = 8, legendLabSize = 8, gridlines.major = FALSE, gridlines.minor = FALSE, border = "full")
+EnhancedVolcano(resdf, x = "log2FoldChange", y = "padj", lab = resdf$SYMBOL, 
+                FCcutoff = 1, pCutoff = 0.05, pointSize = 1, labSize = 3, 
+                title = "Volcano Plot", titleLabSize = 20, legendPosition = "right", 
+                legendIconSize = 8, legendLabSize = 8, gridlines.major = FALSE, 
+                gridlines.minor = FALSE, border = "full")
 ```
 
 ```{r}
@@ -213,8 +222,11 @@ GSEAlist <- sort(GSEAlist, decreasing = TRUE)
 
 ```{r}
 #Gene Set Enrichment Analysis for GO/KEGG
-gseaGO <- gseGO(geneList = GSEAlist, ont = "ALL", minGSSize = 30, keyType = "ENTREZID", pvalueCutoff = 0.05, pAdjustMethod = "BH", verbose = TRUE, OrgDb = org.Hs.eg.db)
-gseaKEGG <- gseKEGG(geneList = GSEAlist, organism = "hsa", minGSSize = 30, pvalueCutoff = 0.05, pAdjustMethod = "BH", verbose = TRUE)
+gseaGO <- gseGO(geneList = GSEAlist, ont = "ALL", minGSSize = 30, keyType = "ENTREZID", 
+                pvalueCutoff = 0.05, pAdjustMethod = "BH", verbose = TRUE, 
+                OrgDb = org.Hs.eg.db)
+gseaKEGG <- gseKEGG(geneList = GSEAlist, organism = "hsa", minGSSize = 30, 
+                    pvalueCutoff = 0.05, pAdjustMethod = "BH", verbose = TRUE)
 
 #Make gene IDs readable (converts Entrez IDs to gene symbols)
 gseaGO <- setReadable(gseaGO, OrgDb = org.Hs.eg.db, keyType = 'ENTREZID')
@@ -236,7 +248,8 @@ gene_pathway_gsea <- function(gene, pathwaylist) {
     list_gene = down_list[[a]]
     for (b in seq_len(length(list_gene))) {
       if (list_gene[b] == gene) {
-        print(paste0("the pathway called ",pathwaylist$Description[[a]], " contains gene ", gene, " with the NES score: ", pathwaylist$NES[[a]]))
+        print(paste0("the pathway called ",pathwaylist$Description[[a]], 
+                     " contains gene ", gene, " with the NES score: ", pathwaylist$NES[[a]]))
       }
     }
   }
@@ -244,37 +257,38 @@ gene_pathway_gsea <- function(gene, pathwaylist) {
 ```
 
 
-```{r}
+```{r, fig.width=10, fig.height=5}
 #Perform dotplot using GO and KEGG
-GO_dot <- dotplot(gseaGO, showCategory = 10, font.size = 8, split = ".sign") + facet_grid(.~.sign)
-GSEA_dot <- dotplot(gseaKEGG, showCategory = 10, font.size = 8, split = ".sign") + facet_grid(.~.sign)
-cowplot::plot_grid(GO_dot, GSEA_dot)
+dotplot(gseaGO, showCategory = 10, font.size = 6, split = ".sign") + facet_grid(.~.sign)
+dotplot(gseaKEGG, showCategory = 10, font.size = 6, split = ".sign") + facet_grid(.~.sign)
 ```
 
-```{r}
+```{r, fig.width=10, fig.height=5}
 #Perform ridgeplot using GO and KEGG
-GO_ridge <- ridgeplot(gseaGO, showCategory = 10) + labs(x = "Enrichment distribution") + 
+ridgeplot(gseaGO, showCategory = 10) + labs(x = "Enrichment distribution") + 
   theme(text = element_text(size = 8),
         axis.text.x = element_text(size = 8), 
         axis.text.y = element_text(size = 8))
-KEGG_ridge <- ridgeplot(gseaKEGG, showCategory = 10) + labs(x = "Enrichment distribution") + 
+ridgeplot(gseaKEGG, showCategory = 10) + labs(x = "Enrichment distribution") + 
   theme(text = element_text(size = 8),
         axis.text.x = element_text(size = 8), 
         axis.text.y = element_text(size = 8))
-cowplot::plot_grid(GO_ridge, KEGG_ridge)
 ```
 
-```{r}
+```{r, fig.width=10, fig.height=5}
 #Perform heatplot using GO and KEGG
-GO_heat <- heatplot(gseaGO, showCategory = 10, foldChange = GSEAlist) + theme(axis.text.x = element_text(size = 3, angle = 90, hjust = 1, vjust = 0.5)) + theme(legend.position = "bottom")
-GSEA_heat <- heatplot(gseaKEGG, showCategory = 10, foldChange = GSEAlist) + theme(axis.text.x = element_text(size = 3, angle = 90, hjust = 1, vjust = 0.5)) + theme(legend.position = "bottom")
-cowplot::plot_grid(GO_heat, GSEA_heat)
+heatplot(gseaGO, showCategory = 10, foldChange = GSEAlist) + 
+  theme(axis.text.x = element_text(size = 3, angle = 90, hjust = 1, vjust = 0.5)) + 
+  theme(legend.position = "bottom")
+heatplot(gseaKEGG, showCategory = 10, foldChange = GSEAlist) + 
+  theme(axis.text.x = element_text(size = 3, angle = 90, hjust = 1, vjust = 0.5)) + 
+  theme(legend.position = "bottom")
 ```
 
 ```{r}
 #Perform category plot using GO and KEGG
 #categorySize can be either 'pvalue' or 'geneNum'
-GO_cnet <- cnetplot(gseaGO,font.size=4, categorySize="geneNum", foldChange=GSEAlist,max.overlaps=50,node_label="gene")
-KEGG_cnet <- cnetplot(gseaKEGG,font.size=4, categorySize="geneNum", foldChange=GSEAlist,max.overlaps=50,node_label="gene")
-cowplot::plot_grid(GO_cnet, KEGG_cnet)
+#GO_cnet <- cnetplot(gseaGO,font.size=4, categorySize="geneNum", foldChange=GSEAlist,max.overlaps=50,node_label="gene")
+#KEGG_cnet <- cnetplot(gseaKEGG,font.size=4, categorySize="geneNum", foldChange=GSEAlist,max.overlaps=50,node_label="gene")
+#cowplot::plot_grid(GO_cnet, KEGG_cnet)
 ```
