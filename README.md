@@ -17,3 +17,17 @@ Pathway analysis using Gene Ontology and KEGG revealed distinct biological progr
 ![GO](gseGO.png)
 
 ![KEGG](gseKEGG.png)
+
+Among the top differentially expressed genes, IGFBP3 is the only gene with a well-established role in Ewing sarcoma. IGFBP3 has been shown to inhibit Ewing sarcoma cell proliferation in an IGF-1R–independent manner, and its repression is thought to promote tumor growth. Consistent with this, EWS–FLI knockdown resulted in increased IGFBP3 expression in our dataset, supporting both the effectiveness of the knockdown and the biological relevance of the analysis.
+
+![IGFBP3](IGFPB3.png)
+
+Several upregulated genes following EWS–FLI knockdown were associated with extracellular matrix and differentiation-related processes, including MGP, WNT7B, HAPLN1, and CSPG4P13. MGP and HAPLN1 contribute to ECM structure and stabilization, while CSPG4P13 is related to CSPG4, a proteoglycan linked to mesenchymal and ECM-associated biology. WNT7B participates in Wnt signaling, which plays key roles in the development and regulation of cell–matrix interactions. The coordinated upregulation of these genes is consistent with pathway-level enrichment of ECM-related processes, suggesting that EWS–FLI normally suppresses these programs in Ewing sarcoma cells. The GSEAplot is also attached below.
+
+![ECM gene](ECM_gene.png)
+
+![ECM Pathway](ECM pathway.png)
+
+In contrast, three downregulated genes—GABRA4, SYNPR, and SYCP1—were associated with neuronal or lineage-inappropriate programs. GABRA4 encodes a subunit of the GABA-A​ receptor, SYNPR is involved in synaptic vesicle function, and SYCP1, although best known for its role in meiosis, has been reported to show ectopic expression in cancer. While none of these genes have been directly linked to Ewing sarcoma, tumors are known to display neuroectoderm-like features and express neural or non-mesenchymal markers. Their reduced expression following EWS–FLI knockdown may therefore reflect a loss of aberrant neural-like transcriptional programs maintained by EWS–FLI. Further studies will be required to determine whether these changes represent a broader shift in cell identity or differentiation state.
+
+![neuronal](neuronal_gene.png)
