@@ -30,6 +30,4 @@ Several upregulated genes following EWS–FLI knockdown were associated with ext
 
 In contrast, two downregulated genes—GABRA4 and SYNPR—were associated with neuronal or lineage-inappropriate programs. GABRA4 encodes a subunit of the GABAA_A​ receptor, a key component of inhibitory neurotransmission, while SYNPR is involved in synaptic vesicle function and neurotransmitter release. Although neither gene has been directly linked to Ewing sarcoma, tumors are known to display neuroectoderm-like features and express neural or non-mesenchymal markers. The reduced expression of GABRA4 and SYNPR following EWS–FLI knockdown may therefore reflect a loss of aberrant neural-like transcriptional programs maintained by EWS–FLI. Further studies will be needed to determine whether these changes indicate a broader shift in cell identity or differentiation state.
 
-![Neuronal](neuronal_gene.png)
-
 ![neuronal](neuronal_gene.png)
