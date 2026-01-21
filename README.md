@@ -26,7 +26,7 @@ Several upregulated genes following EWS–FLI knockdown were associated with ext
 
 ![ECM gene](ECM_gene.png)
 
-![ECM Pathway](ECM pathway.png)
+![ECM Pathway](ECM_pathway.png)
 
 In contrast, three downregulated genes—GABRA4, SYNPR, and SYCP1—were associated with neuronal or lineage-inappropriate programs. GABRA4 encodes a subunit of the GABA-A​ receptor, SYNPR is involved in synaptic vesicle function, and SYCP1, although best known for its role in meiosis, has been reported to show ectopic expression in cancer. While none of these genes have been directly linked to Ewing sarcoma, tumors are known to display neuroectoderm-like features and express neural or non-mesenchymal markers. Their reduced expression following EWS–FLI knockdown may therefore reflect a loss of aberrant neural-like transcriptional programs maintained by EWS–FLI. Further studies will be required to determine whether these changes represent a broader shift in cell identity or differentiation state.
 
