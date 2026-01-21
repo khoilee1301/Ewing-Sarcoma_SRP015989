@@ -22,7 +22,7 @@ Among the top differentially expressed genes, IGFBP3 is the only gene with a wel
 
 ![IGFBP3](IGFBP3.png)
 
-Several upregulated genes following EWS–FLI knockdown were associated with extracellular matrix and differentiation-related processes, including MGP, WNT7B, HAPLN1, and CSPG4P13. MGP and HAPLN1 contribute to ECM structure and stabilization, while CSPG4P13 is related to CSPG4, a proteoglycan linked to mesenchymal and ECM-associated biology. WNT7B participates in Wnt signaling, which plays key roles in the development and regulation of cell–matrix interactions. The coordinated upregulation of these genes is consistent with pathway-level enrichment of ECM-related processes, suggesting that EWS–FLI normally suppresses these programs in Ewing sarcoma cells. The GSEAplot is also attached below.
+Several upregulated genes following EWS–FLI knockdown were associated with extracellular matrix and differentiation-related processes, including MGP, WNT7B, CDHR1, and CSPG4P13. MGP contributes to extracellular matrix organization, while CDHR1 is involved in cell–cell adhesion and is closely linked to ECM–adhesion dynamics. CSPG4P13 is related to CSPG4, a proteoglycan associated with mesenchymal identity and ECM-related biology. WNT7B participates in Wnt signaling, which plays important roles in development and the regulation of cell–matrix interactions. The coordinated upregulation of these genes is consistent with pathway-level enrichment of ECM-related processes, suggesting that EWS–FLI normally suppresses extracellular matrix and differentiation-associated programs in Ewing sarcoma cells. The GSEA plot is shown below.
 
 ![ECM gene](ECM_gene.png)
 
