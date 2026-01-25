@@ -34,4 +34,6 @@ In contrast, two downregulated genes—GABRA4 and SYNPR—were associated with n
 
 Another downregulated gene of interest is SYCP1, which encodes a component of the synaptonemal complex involved in homologous chromosome pairing during meiosis. SYCP1 expression is normally confined to germ cells but has been reported in many cancers as a cancer-testis antigen. Its decreased expression following EWS–FLI knockdown is therefore notable and may reflect loss of an aberrantly activated germline-associated program. KEGG pathway analysis showed that SYCP1 downregulation coincided with reduced activity of pathways related to the ribosome, DNA replication, and cell cycle. Although this does not establish a direct functional role for SYCP1, it is consistent with a broader suppression of transcriptional programs that support proliferation in Ewing sarcoma cells. The GSEA plot is shown below.
 
+![cellular](Cellcular_pathway.png)
+
 ![cellular](Cellular_pathway.png)
