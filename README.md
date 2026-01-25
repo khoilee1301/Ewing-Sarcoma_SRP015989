@@ -36,4 +36,3 @@ Another downregulated gene of interest is SYCP1, which encodes a component of th
 
 ![cellular](Cellcular_pathway.png)
 
-![cellular](Cellular_pathway.png)
