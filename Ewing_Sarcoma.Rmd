@@ -1,0 +1,383 @@
+---
+title: "EW Sarcoma"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+rm(list = ls())
+```
+
+```{r warning = FALSE, message = FALSE}
+# Load libraries
+library(pheatmap)
+library(recount)
+library(DESeq2)
+library(tidyverse)
+library(ggpubr)
+library(EnhancedVolcano)
+library(EnsDb.Hsapiens.v86)
+library(msigdbr)
+library(clusterProfiler)
+library(enrichplot)
+library(cowplot)
+library(org.Hs.eg.db)
+library(gridExtra)
+library(ggridges)
+```
+
+```{r}
+#The same as going the recount2 and download them manually
+project_info <- abstract_search(query = "Ewing sarcoma")
+```
+
+```{r}
+# Download the study data
+download_study("SRP015989")
+# Load the data
+load("SRP015989/rse_gene.Rdata")
+```
+
+```{r}
+# Fix the colData to give a column with the appropriate groups
+rse_gene$condition <- c(rep("shCTR", 3), rep("shEF1", 4))
+```
+
+
+```{r}
+rownames(rse_gene) <- gsub("\\..*$", "", rownames(rse_gene))
+head(rownames(rse_gene))
+```
+
+```{r}
+# Create DESeq2 data
+dds <- DESeqDataSet(rse_gene, design = ~condition)
+```
+
+```{r}
+#filter out low count genes across all samples
+dds <- dds[rowSums(counts(dds)) > 10, ]
+```
+
+
+```{r}
+# relevel so that the control experiment is the base condition
+dds$condition <- relevel(dds$condition, ref = "shCTR")
+```
+
+```{r}
+# transform data into log scale to make the variance more uniform
+logdds <- rlog(dds)
+logdata <- as.data.frame(assay(logdds))
+```
+
+```{r fig.width=10, fig.height=5}
+#PCA is performed to confirm replicates cluster correctly, detect batch effects or outliers, and ensure biological groups separate as expected.
+PCA_data <- plotPCA(logdds, intgroup = "condition", returnData = TRUE)
+percentVar <- round(100 * attr(PCA_data, "percentVar"))
+ggplot(PCA_data, aes(x = PC1, y = PC2, color = condition)) + geom_point() + theme_bw() + 
+  xlab(paste0("PC1:",percentVar[1], "% variance")) + 
+  ylab(paste0("PC2:",percentVar[2], "% variance")) +
+  scale_color_manual(name = "Treatment", values = c("red4","blue3"))
+```
+
+This PCA plot shows a very strong separation between shCTR and shEF1 along PC1, indicating that EF1 knockdown causes a dominant transcriptional change. Replicates cluster tightly within each group, suggesting good sample quality and no major batch effects.
+
+```{r}
+# Perform DESeq2 analysis
+dds <- DESeq(dds)
+res <- results(dds)
+```
+
+```{r message = FALSE, fig.width=10, fig.height=5}
+# -- plotMA
+plotMA(res)
+# LFC shrink
+#find the fold change is exagerrated and shrink into right
+resNorm <- lfcShrink(dds = dds, res = res, type = "normal", coef = 2)
+#coef = 2 means change the second results
+# -- plotMA with resNorm
+plotMA(resNorm)
+```
+
+```{r}
+#Create a result dataframe called resdf
+resdf <- as.data.frame(resNorm) %>%
+  rownames_to_column() %>%
+  rename(ENSEMBL = rowname)
+```
+
+
+```{r}
+#extract gene lists based on ENSEMBL
+genelist <- AnnotationDbi::select(org.Hs.eg.db, keys = rownames(resNorm), keytype = "ENSEMBL", 
+                                  columns = c("ENTREZID", "SYMBOL", "GENETYPE","GENENAME"))
+
+#filter genes with no padj, no symbol, or duplicated symbol
+resdf <- resdf %>%
+  left_join(genelist, by = "ENSEMBL") %>%
+  filter(!is.na(padj)) %>%
+  filter(!is.na(SYMBOL)) %>%
+  filter(!duplicated(SYMBOL))
+```
+
+
+```{r}
+#filter out significant genes
+sig_gene_resdata <- resdf[resdf$baseMean >= 20 & abs(resdf$log2FoldChange) >=1 & 
+                            resdf$padj <= 0.05, ]
+sig_gene <- sig_gene_resdata$ENSEMBL
+```
+
+
+```{r fig.width=10, fig.height=5}
+#heatmap for significant genes
+sig_gene_logdata <- logdata[sig_gene,]
+
+heatmap_anno <- as.data.frame(colData(dds)) %>%
+  dplyr::select(condition)
+
+pheatmap(sig_gene_logdata, scale = "row", clustering_distance_rows = "correlation", 
+         annotation_col = heatmap_anno, title = "Differenly expressed gene", 
+         show_rownames = FALSE, fontsize_col = 8)
+```
+
+```{r}
+#count the number of up-regulated genes
+nrow(resdf[resdf$baseMean >= 20 & resdf$log2FoldChange >=1 & resdf$padj <= 0.05, ])
+
+#count the number of down-regulated genes
+nrow(resdf[resdf$baseMean >= 20 & resdf$log2FoldChange <=-1 & resdf$padj <= 0.05, ])
+```
+
+
+```{r fig.width=10, fig.height=5}
+# extract data for the top 10-upregulated genes
+top10_ensembl <- sig_gene_resdata %>%
+  arrange(desc(log2FoldChange)) %>%
+  head(10) %>%
+  pull(ENSEMBL)
+
+top10_geneid <- sig_gene_resdata %>%
+  arrange(desc(log2FoldChange)) %>%
+  head(10) %>%
+  pull(SYMBOL)
+
+upregulated_heatdata <- sig_gene_logdata[top10_ensembl,]
+rownames(upregulated_heatdata) <- top10_geneid
+
+# extract data for the top 10-downregulated genes
+down10_ensembl <- sig_gene_resdata %>%
+  arrange(log2FoldChange) %>%
+  head(10) %>%
+  pull(ENSEMBL)
+
+down10_geneid <- sig_gene_resdata %>%
+  arrange(log2FoldChange) %>%
+  head(10) %>%
+  pull(SYMBOL)
+
+downregulated_heatdata <- sig_gene_logdata[down10_ensembl,]
+rownames(downregulated_heatdata) <- down10_geneid
+
+#Heatmap of the top and down regulated genes
+mergeheatdata <- rbind(downregulated_heatdata, upregulated_heatdata)
+pheatmap(mergeheatdata, scale = "row", clustering_distance_rows = "correlation", 
+         annotation_col = heatmap_anno, fontsize_row = 8)
+```
+
+
+
+```{r fig.width=10, fig.height=5}
+# Volcano plot
+EnhancedVolcano(resdf, x = "log2FoldChange", y = "padj", lab = resdf$SYMBOL, 
+                FCcutoff = 1, pCutoff = 0.05, pointSize = 1, labSize = 3, 
+                title = "Volcano Plot", titleLabSize = 20, legendPosition = "right", 
+                legendIconSize = 8, legendLabSize = 8, gridlines.major = FALSE, 
+                gridlines.minor = FALSE, border = "full")
+```
+
+```{r}
+#Prepare gene list with decreasing log2FC for GSEA analysis (both GO and KEGG)
+GSEAlist <- resdf$log2FoldChange
+names(GSEAlist) <- resdf$ENTREZID
+
+#remove NAs & remove duplicated IDs
+GSEAlist <- GSEAlist[!is.na(GSEAlist)]
+GSEAlist <- GSEAlist[!duplicated(names(GSEAlist))]
+
+# sort for GSEA
+GSEAlist <- sort(GSEAlist, decreasing = TRUE)
+```
+
+```{r}
+#Gene Set Enrichment Analysis for GO/KEGG
+gseaGO <- gseGO(geneList = GSEAlist, ont = "ALL", minGSSize = 30, keyType = "ENTREZID", 
+                pvalueCutoff = 0.05, pAdjustMethod = "BH", verbose = TRUE, 
+                OrgDb = org.Hs.eg.db)
+gseaKEGG <- gseKEGG(geneList = GSEAlist, organism = "hsa", minGSSize = 30, 
+                    pvalueCutoff = 0.05, pAdjustMethod = "BH", verbose = TRUE)
+
+#Make gene IDs readable (converts Entrez IDs to gene symbols)
+gseaGO <- setReadable(gseaGO, OrgDb = org.Hs.eg.db, keyType = 'ENTREZID')
+gseaKEGG <- setReadable(gseaKEGG, OrgDb = org.Hs.eg.db, keyType = 'ENTREZID')
+```
+
+
+```{r}
+#function to find the associated pathways with gene
+gene_pathway_gsea <- function(gene, pathwaylist) {
+  down_list <- list()
+  for (i in seq(1, nrow(pathwaylist), by = 1)) {
+    seq = pathwaylist$core_enrichment[i]
+    genes <- strsplit(seq, "/")[[1]] # split string into vector
+    down_list[[i]] <- genes 
+  }
+  
+  for (a in seq_len(nrow(pathwaylist))) {
+    list_gene = down_list[[a]]
+    for (b in seq_len(length(list_gene))) {
+      if (list_gene[b] == gene) {
+        print(paste0("the pathway called ",pathwaylist$Description[[a]], 
+                     " contains gene ", gene, " with the NES score: ", pathwaylist$NES[[a]]))
+      }
+    }
+  }
+}
+```
+
+
+```{r, fig.width=10, fig.height=5}
+#Perform dotplot using GO and KEGG
+dotplot(gseaGO, showCategory = 10, font.size = 6, split = ".sign") + facet_grid(.~.sign)
+dotplot(gseaKEGG, showCategory = 10, font.size = 6, split = ".sign") + facet_grid(.~.sign)
+```
+```{r fig.width=10, fig.height=5}
+#gseaplot for ECM-related Pathways
+gseaplot2(gseaKEGG, geneSetID = c("hsa04512","hsa04151"), title = "ECM-related Pathways")
+```
+
+```{r fig.width=10, fig.height=5}
+#gseaplot for Cellular Proliferation Pathways
+gseaplot2(gseaKEGG, geneSetID = c("hsa03010","hsa03030","hsa04110"), title = "Cellular Proliferation Pathways")
+```
+
+```{r, fig.width=10, fig.height=5}
+#Perform ridgeplot using GO and KEGG
+ridgeplot(gseaGO, showCategory = 10) + labs(x = "Enrichment distribution") + 
+  theme(text = element_text(size = 8),
+        axis.text.x = element_text(size = 8), 
+        axis.text.y = element_text(size = 8))
+ridgeplot(gseaKEGG, showCategory = 10) + labs(x = "Enrichment distribution") + 
+  theme(text = element_text(size = 8),
+        axis.text.x = element_text(size = 8), 
+        axis.text.y = element_text(size = 8))
+```
+
+```{r, fig.width=10, fig.height=5}
+#Perform heatplot using GO and KEGG
+heatplot(gseaGO, showCategory = 10, foldChange = GSEAlist) + 
+  theme(axis.text.x = element_text(size = 3, angle = 90, hjust = 1, vjust = 0.5)) + 
+  theme(legend.position = "bottom")
+heatplot(gseaKEGG, showCategory = 10, foldChange = GSEAlist) + 
+  theme(axis.text.x = element_text(size = 3, angle = 90, hjust = 1, vjust = 0.5)) + 
+  theme(legend.position = "bottom")
+```
+
+```{r}
+#Perform category plot using GO and KEGG
+#categorySize can be either 'pvalue' or 'geneNum'
+#GO_cnet <- cnetplot(gseaGO,font.size=4, categorySize="geneNum", foldChange=GSEAlist,max.overlaps=50,node_label="gene")
+#KEGG_cnet <- cnetplot(gseaKEGG,font.size=4, categorySize="geneNum", foldChange=GSEAlist,max.overlaps=50,node_label="gene")
+#cowplot::plot_grid(GO_cnet, KEGG_cnet)
+```
+
+```{r fig.width=10, fig.height=5}
+#draw countplot for IGFBP3
+resdf %>%
+  filter(SYMBOL == "IGFBP3")
+IGFBP3 <- plotCounts(dds, gene = "ENSG00000146674", intgroup = "condition", returnData = TRUE)
+ggplot(IGFBP3, aes(x = condition, y = count, fill = condition)) + geom_boxplot() + 
+  geom_jitter(width = 0.2) + theme_bw() + ylab("Normalized Counts") + xlab("IGFBP3")
+```
+
+
+```{r}
+#extract count data for SYNPR
+resdf %>%
+  filter(SYMBOL == "SYNPR")
+SYNPR <- plotCounts(dds, gene = "ENSG00000163630", intgroup = "condition", returnData = TRUE)
+SYNPRplot <- ggplot(SYNPR, aes(x = condition, y = count, fill = condition)) + geom_boxplot() + 
+  geom_jitter(width = 0.2) + theme_bw() + ylab("Normalized Counts") + xlab("SYNPR")
+```
+
+```{r}
+#extract count data for GABRA4
+resdf %>%
+  filter(SYMBOL == "GABRA4")
+GABRA4 <- plotCounts(dds, gene = "ENSG00000109158", intgroup = "condition", returnData = TRUE)
+GABRA4plot <- ggplot(GABRA4, aes(x = condition, y = count, fill = condition)) + geom_boxplot() + 
+  geom_jitter(width = 0.2) + theme_bw() + ylab("Normalized Counts") + xlab("GABRA4")
+```
+
+```{r}
+#extract count data for SYCP1
+resdf %>%
+  filter(SYMBOL == "SYCP1")
+SYCP1 <- plotCounts(dds, gene = "ENSG00000198765", intgroup = "condition", returnData = TRUE)
+SYCP1plot <- ggplot(SYCP1, aes(x = condition, y = count, fill = condition)) + geom_boxplot() + 
+  geom_jitter(width = 0.2) + theme_bw() + ylab("Normalized Counts") + xlab("SYCP1")
+```
+
+
+```{r fig.width=12, fig.height=6}
+#Draw countplot for GABRA4,SYNPR, and SYCP1
+cowplot::plot_grid(GABRA4plot, SYNPRplot, SYCP1plot)
+```
+
+```{r}
+#extract count data for MGP
+resdf %>%
+  filter(SYMBOL == "MGP")
+MGP <- plotCounts(dds, gene = "ENSG00000111341", intgroup = "condition", returnData = TRUE)
+MGPplot <- ggplot(MGP, aes(x = condition, y = count, fill = condition)) + geom_boxplot() + 
+  geom_jitter(width = 0.2) + theme_bw() + ylab("Normalized Counts") +  xlab("MGP")
+```
+```{r}
+#extract count data for WNT7B
+resdf %>%
+  filter(SYMBOL == "WNT7B")
+WNT7B <- plotCounts(dds, gene = "ENSG00000188064", intgroup = "condition", returnData = TRUE)
+WNT7Bplot <- ggplot(WNT7B, aes(x = condition, y = count, fill = condition)) + geom_boxplot() + 
+  geom_jitter(width = 0.2) + theme_bw() + ylab("Normalized Counts") +  xlab("WNT7B")
+```
+```{r}
+#extract count data for CDHR1
+resdf %>%
+  filter(SYMBOL == "CDHR1")
+CDHR1 <- plotCounts(dds, gene = "ENSG00000148600", intgroup = "condition", returnData = TRUE)
+CDHR1plot <- ggplot(CDHR1, aes(x = condition, y = count, fill = condition)) + geom_boxplot() + 
+  geom_jitter(width = 0.2) + theme_bw() + ylab("Normalized Counts") +  xlab("CDHR1")
+```
+```{r}
+#extract count data for CSPG4P13
+resdf %>%
+  filter(SYMBOL == "CSPG4P13")
+CSPG4P13 <- plotCounts(dds, gene = "ENSG00000260139", intgroup = "condition", returnData = TRUE)
+CSPG4P13plot <- ggplot(CSPG4P13, aes(x = condition, y = count, fill = condition)) + geom_boxplot() + 
+  geom_jitter(width = 0.2) + theme_bw() + ylab("Normalized Counts") +  xlab("CSPG4P13")
+```
+```{r fig.width=12, fig.height=6}
+# Draw countplot for MGP, WNT7B, HAPLN1, and CSPG4P13
+cowplot::plot_grid(MGPplot, WNT7Bplot, CDHR1plot, CSPG4P13plot)
+```
+
